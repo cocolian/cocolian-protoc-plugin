@@ -1,4 +1,4 @@
-option java_package = "com.github.os72.protocjar";
+option java_package = "org.cocolian.maven.protoc";
 option java_outer_classname = "PersonSchema";
 
 message Person {

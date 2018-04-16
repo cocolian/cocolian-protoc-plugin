@@ -2,12 +2,12 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.github.os72</groupId>
-  <artifactId>protoc</artifactId>
+  <groupId>org.cocolian</groupId>
+  <artifactId>cocolian-protoc-plugin</artifactId>
   <packaging>pom</packaging>
   <version>3.4.0-build2</version>
   <name>protoc</name>
-  <url>https://github.com/os72/protoc-jar</url>
+  <url>https://github.com/cocolian/cocolian-protoc-plugin</url>
   <description>Protocol Buffers compiler - executable</description>
 
   <parent>
@@ -44,9 +44,9 @@
   </developers>
 
   <scm>
-    <connection>scm:git:git@github.com:os72/protoc-jar.git</connection>
-    <developerConnection>scm:git:git@github.com:os72/protoc-jar.git</developerConnection>
-    <url>git@github.com:os72/protoc-jar.git</url>
+    <connection>scm:git:git@github.com:cocolian/cocolian-protoc-plugin.git</connection>
+    <developerConnection>scm:git:git@github.com:cocolian/cocolian-protoc-plugin.git</developerConnection>
+    <url>git@github.com:cocolian/cocolian-protoc-plugin.git</url>
   </scm>
 
   <dependencies>
