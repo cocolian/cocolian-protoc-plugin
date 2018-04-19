@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.os72.protocjar;
+package org.cocolian.maven.protoc;
 
 import java.io.File;
 
@@ -47,10 +47,10 @@ public class ProtocTest
 			String[] args = {"--version", "-v3.5.1"};
 			assertEquals(0, Protoc.runProtoc(args));
 		}
-		{
-			String[] args = {"--version", "-v3.5.0-SNAPSHOT"}; // not embedded, should trigger download
-			assertEquals(0, Protoc.runProtoc(args));
-		}
+//		{
+//			String[] args = {"--version", "-v3.5.0-SNAPSHOT"}; // not embedded, should trigger download
+//			assertEquals(0, Protoc.runProtoc(args));
+//		}
 	}
 
 	@Test
@@ -59,15 +59,15 @@ public class ProtocTest
 		String cls = Protoc.getPlatformClassifier();
 		if (cls.startsWith("linux-x86") || cls.startsWith("osx-x86") || cls.startsWith("windows-x86"))
 		{
-			String[] args = {"--version", "-v:com.google.protobuf:protoc:3.1.0"}; // should automatically pick up 3.1.0-build2
+			String[] args = {"--version", "-v:cocolian-protoc-plugin:maven-plugin:3.1.0"}; // should automatically pick up 3.1.0-build2
 			assertEquals(0, Protoc.runProtoc(args));
 		}
 		{
-			String[] args = {"--version", "-v:com.github.os72:protoc:3.4.0"};
+			String[] args = {"--version", "-v:cocolian-protoc-plugin:maven-plugin:3.4.0"};
 			assertEquals(0, Protoc.runProtoc(args));
 		}
 		{
-			String[] args = {"--version", "-v:com.github.os72:protoc:3.4.0-SNAPSHOT"};
+			String[] args = {"--version", "-v:cocolian-protoc-plugin:maven-plugin:3.4.0-SNAPSHOT"};
 			assertEquals(0, Protoc.runProtoc(args));
 		}
 	}
@@ -125,9 +125,8 @@ public class ProtocTest
 			assertHasGeneratedFile(outDir);
 		}
 	}
-
 	private static void assertHasGeneratedFile(String outDir) {
-		assertTrue(new File(outDir + "/com/github/os72/protocjar/PersonSchema.java").exists());
+		assertTrue(new File(outDir + "/org/cocolian/maven/protoc/PersonSchema.java").exists());
 	}
 
 	static void log(Object msg) {
