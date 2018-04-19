@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.os72.protocjar.maven;
+package org.cocolian.maven.protoc;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,16 +43,12 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectHelper;
 import org.sonatype.plexus.build.incremental.BuildContext;
 
-import com.github.os72.protocjar.PlatformDetector;
-import com.github.os72.protocjar.Protoc;
-import com.github.os72.protocjar.ProtocVersion;
-
 /**
  * Compiles .proto files using protoc-jar embedded protoc compiler. Also supports pre-installed protoc binary, and downloading binaries (protoc and protoc plugins) from maven repo
  * 
- * @goal run
- * @phase generate-sources
- * @requiresDependencyResolution
+ * goal run
+ * phase generate-sources
+ * requiresDependencyResolution
  */
 public class ProtocJarMojo extends AbstractMojo
 {

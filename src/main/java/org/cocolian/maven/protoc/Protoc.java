@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.os72.protocjar;
+package org.cocolian.maven.protoc;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -154,7 +154,7 @@ public class Protoc
 					br = new BufferedReader(new FileReader(file));
 					String line;
 					while ((line = br.readLine()) != null) {
-						pw.println(line.replace("com.google.protobuf", "com.github.os72.protobuf" + version));
+						pw.println(line.replace("com.google.protobuf", "org.cocolian.maven.protobuf" + version));
 					}
 					pw.close();
 					br.close();
@@ -468,7 +468,7 @@ public class Protoc
 	static String getPlatformVerbose() {
 		return getPlatformClassifier() + " (" + System.getProperty("os.name").toLowerCase() + "/" + System.getProperty("os.arch").toLowerCase() + ")";
 	}
-	static String getPlatformClassifier() {
+	public static String getPlatformClassifier() {
 		Properties detectorProps = new Properties();
 		new PlatformDetector().detect(detectorProps, null);
 		return detectorProps.getProperty("os.detected.classifier");
@@ -504,7 +504,7 @@ public class Protoc
 
 	static String[] sDdownloadPaths = {
 		"com/google/protobuf/protoc/",
-		"com/github/os72/protoc/",
+		"org/cocolian/maven/protoc",
 	};
 
 	static String[] sStdTypesProto2 = {
