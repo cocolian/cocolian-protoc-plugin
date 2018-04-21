@@ -258,10 +258,9 @@ public class PlatformDetector
      * based on the {@code ID}, {@code ID_LIKE}, and {@code VERSION_ID} entries.
      */
     private static LinuxRelease parseLinuxOsReleaseFile(File file) {
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "utf-8"));
-
+        try (        	
+        		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "utf-8"));
+        ){
             String id = null;
             String version = null;
             Set<String> likeSet = new LinkedHashSet<String>();
@@ -300,9 +299,7 @@ public class PlatformDetector
         } catch (IOException ignored) {
         	log.error(ignored);
             // Just absorb. Don't treat failure to read /etc/os-release as an error.
-        } finally {
-            closeQuietly(reader);
-        }
+        } 
         return null;
     }
 
@@ -312,10 +309,9 @@ public class PlatformDetector
      * Other variants will return {@code null}.
      */
     private static LinuxRelease parseLinuxRedhatReleaseFile(File file) {
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "utf-8"));
-
+        try (
+        		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "utf-8"));
+        ){
             // There is only a single line in this file.
             String line = reader.readLine();
             if (line != null) {
@@ -348,8 +344,6 @@ public class PlatformDetector
         } catch (IOException ignored) {
         	log.error(ignored);
             // Just absorb. Don't treat failure to read /etc/os-release as an error.
-        } finally {
-            closeQuietly(reader);
         }
         return null;
     }
