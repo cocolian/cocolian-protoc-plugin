@@ -37,12 +37,14 @@ import java.util.Properties;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 public class Protoc
 {
+	private static final Logger log=Logger.getLogger(Protoc.class);
 	public static void main(String[] args) {
 		try {
 			if (args.length > 0 && args[0].equals("-pp")) { // print platform
@@ -53,8 +55,7 @@ public class Protoc
 			System.exit(exitCode);
 		}
 		catch (Exception e) {
-			log(e);
-			e.printStackTrace();
+			log.error(e.getMessage(),e);
 		}
 	}
 
@@ -72,9 +73,11 @@ public class Protoc
 			return runProtoc(protocTemp.getAbsolutePath(), Arrays.asList(args));
 		}
 		catch (FileNotFoundException e) {
+			log.error(e.getMessage(),e);
 			throw e;
 		}
 		catch (Exception e) {
+			log.error(e.getMessage(),e);
 			// some linuxes don't allow exec in /tmp, try user home
 			String homeDir = System.getProperty("user.home");
 			File protocTemp = extractProtoc(protocVersion, includeStdTypes, new File(homeDir));
@@ -111,13 +114,13 @@ public class Protoc
 		int numTries = 1;
 		while (protoc == null) {
 			try {
-				log("executing: " + protocCmd);
+				log.debug("executing: " + protocCmd);
 				ProcessBuilder pb = new ProcessBuilder(protocCmd);
 				protoc = pb.start();
 			}
 			catch (IOException ioe) {
 				if (numTries++ >= 3) throw ioe; // retry loop, workaround text file busy issue
-				log("caught exception, retrying: " + ioe);
+				log.error("caught exception, retrying: "+ioe.getMessage() + ioe);
 				Thread.sleep(1000);
 			}
 		}
@@ -127,7 +130,7 @@ public class Protoc
 		int exitCode = protoc.waitFor();
 		
 		if (javaShadedOutDir != null) {
-			log("shading (version " + protocVersion + "): " + javaShadedOutDir);
+			log.debug("shading (version " + protocVersion + "): " + javaShadedOutDir);
 			doShading(new File(javaShadedOutDir), protocVersion.mVersion);
 		}
 		
@@ -141,7 +144,6 @@ public class Protoc
 				doShading(file, version);
 			}
 			else if (file.getName().endsWith(".java")) {
-				//log(file.getPath());
 				File tmpFile = null;
 				PrintWriter pw = null;
 				BufferedReader br = null;
@@ -159,7 +161,7 @@ public class Protoc
 					pw.close();
 					br.close();
 					// tmpFile.renameTo(file) only works on same filesystem, make copy instead:
-					if (!file.delete()) log("Failed to delete: " + file.getName());
+					if (!file.delete()) log.error("Failed to delete: " + file.getName());
 					is = new FileInputStream(tmpFile);
 					os = new FileOutputStream(file);
 					streamCopy(is, os);
@@ -186,7 +188,7 @@ public class Protoc
 	}
 
 	public static File extractProtoc(ProtocVersion protocVersion, File dir) throws IOException {
-		log("protoc version: " + protocVersion + ", detected platform: " + getPlatformVerbose());
+		log.debug("protoc version: " + protocVersion + ", detected platform: " + getPlatformVerbose());
 		
 		File tmpDir = File.createTempFile("protocjar", "", dir);
 		tmpDir.delete(); tmpDir.mkdirs();
@@ -202,13 +204,13 @@ public class Protoc
 			try {
 				File protocTemp = new File(binDir, "protoc.exe");
 				populateFile(srcFilePath, protocTemp);
-				log("embedded: " + srcFilePath);
+				log.debug("embedded: " + srcFilePath);
 				protocTemp.setExecutable(true);
 				protocTemp.deleteOnExit();
 				return protocTemp;
 			}
 			catch (FileNotFoundException e) {
-				//log(e);
+				log.error(e.getMessage(),e);
 			}
 			
 			// look in cache and maven central
@@ -236,7 +238,7 @@ public class Protoc
 				if (exeFile != null) return exeFile;
 			}
 			catch (IOException e) {
-				//log(e);
+				log.error(e.getMessage(),e);
 			}
 		}
 		
@@ -247,7 +249,7 @@ public class Protoc
 				if (exeFile != null) return exeFile;
 			}
 			catch (IOException e) {
-				//log(e);
+				log.error(e.getMessage(),e);
 			}
 		}
 		
@@ -276,7 +278,7 @@ public class Protoc
 			}
 		}
 		catch (IOException e) {
-			//log(e);
+			log.error(e.getMessage(),e);
 		}
 		
 		// download exe
@@ -287,7 +289,7 @@ public class Protoc
 			return downloadFile(exeUrl, exeFile, 0);
 		}
 		else if (exeFile.exists()) { // cache only
-			log("cached: " + exeFile);
+			log.debug("cached: " + exeFile);
 			return exeFile;
 		}
 		return null;
@@ -316,7 +318,7 @@ public class Protoc
 
 	public static File downloadFile(URL srcUrl, File destFile, long cacheTime) throws IOException {
 		if (destFile.exists() && ((cacheTime <= 0) || (System.currentTimeMillis() - destFile.lastModified() <= cacheTime))) {
-			log("cached: " + destFile);
+			log.debug("cached: " + destFile);
 			return destFile;
 		}
 		
@@ -328,7 +330,7 @@ public class Protoc
 			con.setRequestProperty("User-Agent", "Mozilla"); // sonatype only returns proper maven-metadata.xml if this is set
 			is = con.getInputStream();
 			os = new FileOutputStream(tmpFile);
-			log("downloading: " + srcUrl);
+			log.debug("downloading: " + srcUrl);
 			streamCopy(is, os);
 			is.close();
 			os.close();
@@ -338,6 +340,7 @@ public class Protoc
 			destFile.setLastModified(System.currentTimeMillis());
 		}
 		catch (IOException e) {
+			log.error(e.getMessage(),e);
 			tmpFile.delete();
 			if (!destFile.exists()) throw e; // if download failed but had cached version, ignore exception
 		}
@@ -346,7 +349,7 @@ public class Protoc
 			if (os != null) os.close();
 		}
 		
-		log("saved: " + destFile);
+		log.debug("saved: " + destFile);
 		return destFile;
 	}
 
@@ -418,6 +421,7 @@ public class Protoc
 			}
 		}
 		catch (Exception e) {
+			log.error(e.getMessage(),e);
 			throw new IOException(e);
 		}
 		if (lastBuild > 0) return protocVersion.mVersion+"-build"+lastBuild;
@@ -448,6 +452,7 @@ public class Protoc
 			}
 		}
 		catch (Exception e) {
+			log.error(e.getMessage(),e);
 			throw new IOException(e);
 		}
 		return exeName;
@@ -478,9 +483,9 @@ public class Protoc
 		return ProtocVersion.getVersion(spec);
 	}
 
-	static void log(Object msg) {
-		System.out.println("protoc-jar: " + msg);
-	}
+//	static void log(Object msg) {
+//		System.out.println("protoc-jar: " + msg);
+//	}
 
 	static class StreamCopier implements Runnable
 	{
@@ -494,7 +499,7 @@ public class Protoc
 				streamCopy(mIn, mOut);
 			}
 			catch (IOException e) {
-				e.printStackTrace();
+				log.error(e.getMessage(),e);
 			}
 		}
 
