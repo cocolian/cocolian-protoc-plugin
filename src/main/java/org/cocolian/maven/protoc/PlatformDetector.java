@@ -36,8 +36,11 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.log4j.Logger;
+
 public class PlatformDetector
 {
+	private static final Logger log=Logger.getLogger(PlatformDetector.class);
     public static final String DETECTED_NAME = "os.detected.name";
     public static final String DETECTED_ARCH = "os.detected.arch";
     public static final String DETECTED_VERSION = "os.detected.version";
@@ -60,9 +63,9 @@ public class PlatformDetector
     private static final Pattern REDHAT_MAJOR_VERSION_REGEX = Pattern.compile("(\\d+)");
 
     public void detect(Properties props, List<String> classifierWithLikes) {
-        log("------------------------------------------------------------------------");
-        log("Detecting the operating system and CPU architecture");
-        log("------------------------------------------------------------------------");
+        log.debug("------------------------------------------------------------------------");
+        log.debug("Detecting the operating system and CPU architecture");
+        log.debug("------------------------------------------------------------------------");
 
         final Properties allProps = new Properties(System.getProperties());
         allProps.putAll(props);
@@ -132,12 +135,13 @@ public class PlatformDetector
         logProperty(name, value);
     }
 
-    protected void log(String message) {
-    	//log(message);
-    }
+//    protected void log(String message) {
+//    	//log(message);
+//    }
 
     protected void logProperty(String name, String value) {
     	//log(name + ": " + value);
+    	log.debug(name + ": " + value);
     }
 
     private static String normalizeOs(String value) {
@@ -292,6 +296,7 @@ public class PlatformDetector
                 return new LinuxRelease(id, version, likeSet);
             }
         } catch (IOException ignored) {
+        	log.error(ignored);
             // Just absorb. Don't treat failure to read /etc/os-release as an error.
         } finally {
             closeQuietly(reader);
@@ -339,6 +344,7 @@ public class PlatformDetector
                 return new LinuxRelease(id, version, likeSet);
             }
         } catch (IOException ignored) {
+        	log.error(ignored);
             // Just absorb. Don't treat failure to read /etc/os-release as an error.
         } finally {
             closeQuietly(reader);
@@ -358,6 +364,7 @@ public class PlatformDetector
             }
         } catch (IOException ignored) {
             // Ignore.
+        	log.error(ignored);
         }
     }
 
