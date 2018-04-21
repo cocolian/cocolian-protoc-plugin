@@ -54,6 +54,7 @@ import org.sonatype.plexus.build.incremental.BuildContext;
 public class ProtocJarMojo extends AbstractMojo
 {
 	private static final Logger log=Logger.getLogger(ProtocJarMojo.class);
+	private static final String VERSION="--version";
 	private static final String DEFAULT_INPUT_DIR = "/src/main/protobuf/".replace('/', File.separatorChar);
 
     /**
@@ -311,7 +312,7 @@ public class ProtocJarMojo extends AbstractMojo
 	private void performProtoCompilation() throws MojoExecutionException {
 		if (protocCommand != null) {
 			try {
-				Protoc.runProtoc(protocCommand, new String[]{"--version"});
+				Protoc.runProtoc(protocCommand, new String[]{VERSION});
 			}
 			catch (Exception e) {
 				log.error(e.getMessage(),e);
@@ -331,7 +332,7 @@ public class ProtocJarMojo extends AbstractMojo
 					protocCommand = protocFile.getAbsolutePath();
 					try {
 						// some linuxes don't allow exec in /tmp, try one dummy execution, switch to user home if it fails
-						Protoc.runProtoc(protocCommand, new String[]{"--version"});
+						Protoc.runProtoc(protocCommand, new String[]{VERSION});
 					}
 					catch (Exception e) {
 						log.error(e.getMessage(),e);
@@ -357,7 +358,7 @@ public class ProtocJarMojo extends AbstractMojo
 			protocCommand = resolveArtifact(protocArtifact, null).getAbsolutePath();
 			try {
 				// some linuxes don't allow exec in /tmp, try one dummy execution, switch to user home if it fails
-				Protoc.runProtoc(protocCommand, new String[]{"--version"});
+				Protoc.runProtoc(protocCommand, new String[]{VERSION});
 			}
 			catch (Exception e) {
 				log.error(e.getMessage(),e);

@@ -28,7 +28,6 @@ import java.io.PrintWriter;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,6 +47,9 @@ import org.w3c.dom.NodeList;
 public class Protoc
 {
 	private static final Logger log=Logger.getLogger(Protoc.class);
+	private static final String PROTOCJAR="protocjar";
+	private static final String BUILD="-build";
+	
 	public static void main(String[] args) {
 		try {
 			if (args.length > 0 && args[0].equals("-pp")) { // print platform
@@ -180,7 +182,7 @@ public class Protoc
 	public static File extractProtoc(ProtocVersion protocVersion, File dir) throws IOException {
 		log.debug("protoc version: " + protocVersion + ", detected platform: " + getPlatformVerbose());
 		
-		File tmpDir = File.createTempFile("protocjar", "", dir);
+		File tmpDir = File.createTempFile(PROTOCJAR, "", dir);
 		Files.delete(Paths.get(tmpDir.getAbsolutePath()));
 		tmpDir.mkdirs();
 		tmpDir.deleteOnExit();
@@ -313,7 +315,7 @@ public class Protoc
 			return destFile;
 		}
 		
-		File tmpFile = File.createTempFile("protocjar", ".tmp");
+		File tmpFile = File.createTempFile(PROTOCJAR, ".tmp");
 	
 		URLConnection con = srcUrl.openConnection();
 		con.setRequestProperty("User-Agent", "Mozilla"); // sonatype only returns proper maven-metadata.xml if this is set
@@ -339,7 +341,7 @@ public class Protoc
 
 	public static File extractStdTypes(ProtocVersion protocVersion, File tmpDir) throws IOException {
 		if (tmpDir == null) {
-			tmpDir = File.createTempFile("protocjar", "");
+			tmpDir = File.createTempFile(PROTOCJAR, "");
 			Files.delete(Paths.get(tmpDir.getAbsolutePath()));
 			tmpDir.mkdirs();
 			tmpDir.deleteOnExit();
@@ -391,8 +393,8 @@ public class Protoc
 			for (int i = 0; i < versions.getLength(); i++) {
 				Node ver = versions.item(i);
 				String verStr = ver.getTextContent();
-				if (verStr.startsWith(protocVersion.mVersion+"-build")) {
-					String buildStr = verStr.substring(verStr.indexOf("-build")+"-build".length());
+				if (verStr.startsWith(protocVersion.mVersion+BUILD)) {
+					String buildStr = verStr.substring(verStr.indexOf(BUILD)+BUILD.length());
 					int build = Integer.parseInt(buildStr);
 					if (build > lastBuild) lastBuild = build;
 				}
@@ -402,7 +404,7 @@ public class Protoc
 			log.error(e.getMessage(),e);
 			throw new IOException(e);
 		}
-		if (lastBuild > 0) return protocVersion.mVersion+"-build"+lastBuild;
+		if (lastBuild > 0) return protocVersion.mVersion+BUILD+lastBuild;
 		return null;
 	}
 
@@ -437,7 +439,7 @@ public class Protoc
 	}
 
 	static File getWebcacheDir() throws IOException {
-		File tmpFile = File.createTempFile("protocjar", ".tmp");
+		File tmpFile = File.createTempFile(PROTOCJAR, ".tmp");
 		File cacheDir = new File(tmpFile.getParentFile(), "protocjar.webcache");
 		cacheDir.mkdirs();
 		Files.delete(Paths.get(tmpFile.getAbsolutePath()));
