@@ -145,34 +145,28 @@ public class Protoc
 			}
 			else if (file.getName().endsWith(".java")) {
 				File tmpFile = null;
-				PrintWriter pw = null;
-				BufferedReader br = null;
-				FileInputStream is = null;
-				FileOutputStream os = null;
-				try {
+				tmpFile = File.createTempFile(file.getName(), null);
+				try (FileOutputStream os =new FileOutputStream(file);
+					FileInputStream is =new FileInputStream(tmpFile);
+					PrintWriter pw = new PrintWriter(tmpFile);
+					BufferedReader br = new BufferedReader(new FileReader(file));
+				){
 					version = version.replace(".", "");
-					tmpFile = File.createTempFile(file.getName(), null);
-					pw = new PrintWriter(tmpFile);
-					br = new BufferedReader(new FileReader(file));
 					String line;
 					while ((line = br.readLine()) != null) {
 						pw.println(line.replace("com.google.protobuf", "org.cocolian.maven.protobuf" + version));
 					}
-					pw.close();
-					br.close();
 					// tmpFile.renameTo(file) only works on same filesystem, make copy instead:
 					if (!file.delete()) log.error("Failed to delete: " + file.getName());
-					is = new FileInputStream(tmpFile);
-					os = new FileOutputStream(file);
 					streamCopy(is, os);
 				}
-				finally {
-					if (br != null) { try {br.close();} catch (Exception e) {} }
-					if (pw != null) { try {pw.close();} catch (Exception e) {} }
-					if (is != null) { try {is.close();} catch (Exception e) {} }
-					if (os != null) { try {os.close();} catch (Exception e) {} }
-					if (tmpFile != null) tmpFile.delete();
-				}
+//				finally {
+//					if (br != null) { try {br.close();} catch (Exception e) {} }
+//					if (pw != null) { try {pw.close();} catch (Exception e) {} }
+//					if (is != null) { try {is.close();} catch (Exception e) {} }
+//					if (os != null) { try {os.close();} catch (Exception e) {} }
+//					if (tmpFile != null) tmpFile.delete();
+//				}
 			}
 		}
 	}
@@ -326,7 +320,10 @@ public class Protoc
 	
 		URLConnection con = srcUrl.openConnection();
 		con.setRequestProperty("User-Agent", "Mozilla"); // sonatype only returns proper maven-metadata.xml if this is set
-		try (FileOutputStream os =new FileOutputStream(tmpFile);InputStream is = con.getInputStream();){
+		try (
+				FileOutputStream os =new FileOutputStream(tmpFile);
+				InputStream is = con.getInputStream();
+		){
 			log.debug("downloading: " + srcUrl);
 			streamCopy(is, os);
 			destFile.getParentFile().mkdirs();
@@ -371,19 +368,12 @@ public class Protoc
 	public static File populateFile(String srcFilePath, File destFile) throws IOException {
 		String resourcePath = "/" + srcFilePath; // resourcePath for jar, srcFilePath for test
 		
-		FileOutputStream os = null;
-		InputStream is = Protoc.class.getResourceAsStream(resourcePath);
-		if (is == null) is = new FileInputStream(srcFilePath);
-		
-		try {
-			os = new FileOutputStream(destFile);
+		try (
+				FileOutputStream os = new FileOutputStream(destFile);
+				InputStream is = Protoc.class.getResourceAsStream(resourcePath)==null?new FileInputStream(srcFilePath):Protoc.class.getResourceAsStream(resourcePath);
+		){
 			streamCopy(is, os);
 		}
-		finally {
-			if (is != null) is.close();
-			if (os != null) os.close();
-		}
-		
 		return destFile;
 	}
 
