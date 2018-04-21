@@ -32,6 +32,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.apache.log4j.Logger;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
@@ -52,6 +53,7 @@ import org.sonatype.plexus.build.incremental.BuildContext;
  */
 public class ProtocJarMojo extends AbstractMojo
 {
+	private static final Logger log=Logger.getLogger(ProtocJarMojo.class);
 	private static final String DEFAULT_INPUT_DIR = "/src/main/protobuf/".replace('/', File.separatorChar);
 
     /**
@@ -312,6 +314,7 @@ public class ProtocJarMojo extends AbstractMojo
 				Protoc.runProtoc(protocCommand, new String[]{"--version"});
 			}
 			catch (Exception e) {
+				log.error(e.getMessage(),e);
 				protocCommand = null;
 			}
 		}
@@ -331,6 +334,7 @@ public class ProtocJarMojo extends AbstractMojo
 						Protoc.runProtoc(protocCommand, new String[]{"--version"});
 					}
 					catch (Exception e) {
+						log.error(e.getMessage(),e);
 						tempRoot = new File(System.getProperty("user.home"));
 						protocFile = Protoc.extractProtoc(ProtocVersion.getVersion("-v"+protocVersion), includeStdTypes, tempRoot);
 						protocCommand = protocFile.getAbsolutePath();
@@ -343,6 +347,7 @@ public class ProtocJarMojo extends AbstractMojo
 				}
 			}
 			catch (IOException e) {
+				log.error(e.getMessage(),e);
 				throw new MojoExecutionException("Error extracting protoc for version " + protocVersion, e);
 			}
 		}
@@ -355,6 +360,7 @@ public class ProtocJarMojo extends AbstractMojo
 				Protoc.runProtoc(protocCommand, new String[]{"--version"});
 			}
 			catch (Exception e) {
+				log.error(e.getMessage(),e);
 				tempRoot = new File(System.getProperty("user.home"));
 				protocCommand = resolveArtifact(protocArtifact, tempRoot).getAbsolutePath();
 			}
@@ -422,7 +428,7 @@ public class ProtocJarMojo extends AbstractMojo
 				FileUtils.cleanDirectory(f);
 			}
 			catch (IOException e) {
-				e.printStackTrace();
+				log.error(e.getMessage(),e);
 			}
 		}
 	}
@@ -462,6 +468,7 @@ public class ProtocJarMojo extends AbstractMojo
 				Protoc.doShading(target.outputDirectory, protocVersion.replace(".", ""));
 			}
 			catch (IOException e) {
+				log.error(e.getMessage(),e);
 				throw new MojoExecutionException("Error occurred during shading", e);
 			}
 		}
@@ -492,9 +499,11 @@ public class ProtocJarMojo extends AbstractMojo
 			if (ret != 0) throw new MojoExecutionException("protoc-jar failed for " + file + ". Exit code " + ret);
 		}
 		catch (InterruptedException e) {
+			log.error(e.getMessage(),e);
 			throw new MojoExecutionException("Interrupted", e);
 		}
 		catch (IOException e) {
+			log.error(e.getMessage(),e);
 			throw new MojoExecutionException("Unable to execute protoc-jar for " + file, e);
 		}
 	}
@@ -555,6 +564,7 @@ public class ProtocJarMojo extends AbstractMojo
 			return tempFile;
 		}
 		catch (Exception e) {
+			log.error(e.getMessage(),e);
 			throw new MojoExecutionException("Error resolving artifact: " + artifactSpec, e);
 		}
 	}
