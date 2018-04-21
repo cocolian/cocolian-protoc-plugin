@@ -27,6 +27,9 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -157,16 +160,9 @@ public class Protoc
 						pw.println(line.replace("com.google.protobuf", "org.cocolian.maven.protobuf" + version));
 					}
 					// tmpFile.renameTo(file) only works on same filesystem, make copy instead:
-					if (!file.delete()) log.error("Failed to delete: " + file.getName());
+					Files.delete(Paths.get(file.getAbsolutePath()));
 					streamCopy(is, os);
 				}
-//				finally {
-//					if (br != null) { try {br.close();} catch (Exception e) {} }
-//					if (pw != null) { try {pw.close();} catch (Exception e) {} }
-//					if (is != null) { try {is.close();} catch (Exception e) {} }
-//					if (os != null) { try {os.close();} catch (Exception e) {} }
-//					if (tmpFile != null) tmpFile.delete();
-//				}
 			}
 		}
 	}
@@ -185,7 +181,8 @@ public class Protoc
 		log.debug("protoc version: " + protocVersion + ", detected platform: " + getPlatformVerbose());
 		
 		File tmpDir = File.createTempFile("protocjar", "", dir);
-		tmpDir.delete(); tmpDir.mkdirs();
+		Files.delete(Paths.get(tmpDir.getAbsolutePath()));
+		tmpDir.mkdirs();
 		tmpDir.deleteOnExit();
 		File binDir = new File(tmpDir, "bin");
 		binDir.mkdirs();
@@ -327,13 +324,13 @@ public class Protoc
 			log.debug("downloading: " + srcUrl);
 			streamCopy(is, os);
 			destFile.getParentFile().mkdirs();
-			destFile.delete();
+			Files.delete(Paths.get(destFile.getAbsolutePath()));
 			tmpFile.renameTo(destFile);
 			destFile.setLastModified(System.currentTimeMillis());
 		}
 		catch (IOException e) {
 			log.error(e.getMessage(),e);
-			tmpFile.delete();
+			Files.delete(Paths.get(tmpFile.getAbsolutePath()));
 			if (!destFile.exists()) throw e; // if download failed but had cached version, ignore exception
 		}
 		log.debug("saved: " + destFile);
@@ -343,7 +340,8 @@ public class Protoc
 	public static File extractStdTypes(ProtocVersion protocVersion, File tmpDir) throws IOException {
 		if (tmpDir == null) {
 			tmpDir = File.createTempFile("protocjar", "");
-			tmpDir.delete(); tmpDir.mkdirs();
+			Files.delete(Paths.get(tmpDir.getAbsolutePath()));
+			tmpDir.mkdirs();
 			tmpDir.deleteOnExit();
 		}
 		
@@ -442,7 +440,7 @@ public class Protoc
 		File tmpFile = File.createTempFile("protocjar", ".tmp");
 		File cacheDir = new File(tmpFile.getParentFile(), "protocjar.webcache");
 		cacheDir.mkdirs();
-		tmpFile.delete();
+		Files.delete(Paths.get(tmpFile.getAbsolutePath()));
 		return cacheDir;
 	}
 
