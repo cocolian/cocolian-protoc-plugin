@@ -570,18 +570,10 @@ public class ProtocJarMojo extends AbstractMojo
 	}
 
 	static File copyFile(File srcFile, File destFile) throws IOException {		
-		FileInputStream is = null;
-		FileOutputStream os = null;
-		try {
-			is = new FileInputStream(srcFile);
-			os = new FileOutputStream(destFile);
+		try (FileOutputStream os = new FileOutputStream(destFile);FileInputStream is = new FileInputStream(srcFile);){
 			int read = 0;
 			byte[] buf = new byte[4096];
 			while ((read = is.read(buf)) > 0) os.write(buf, 0, read);		
-		}
-		finally {
-			if (is != null) is.close();
-			if (os != null) os.close();
 		}
 		return destFile;
 	}

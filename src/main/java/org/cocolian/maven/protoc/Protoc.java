@@ -323,17 +323,12 @@ public class Protoc
 		}
 		
 		File tmpFile = File.createTempFile("protocjar", ".tmp");
-		InputStream is = null;
-		FileOutputStream os = null;
-		try {
-			URLConnection con = srcUrl.openConnection();
-			con.setRequestProperty("User-Agent", "Mozilla"); // sonatype only returns proper maven-metadata.xml if this is set
-			is = con.getInputStream();
-			os = new FileOutputStream(tmpFile);
+	
+		URLConnection con = srcUrl.openConnection();
+		con.setRequestProperty("User-Agent", "Mozilla"); // sonatype only returns proper maven-metadata.xml if this is set
+		try (FileOutputStream os =new FileOutputStream(tmpFile);InputStream is = con.getInputStream();){
 			log.debug("downloading: " + srcUrl);
 			streamCopy(is, os);
-			is.close();
-			os.close();
 			destFile.getParentFile().mkdirs();
 			destFile.delete();
 			tmpFile.renameTo(destFile);
@@ -344,11 +339,6 @@ public class Protoc
 			tmpFile.delete();
 			if (!destFile.exists()) throw e; // if download failed but had cached version, ignore exception
 		}
-		finally {
-			if (is != null) is.close();
-			if (os != null) os.close();
-		}
-		
 		log.debug("saved: " + destFile);
 		return destFile;
 	}
