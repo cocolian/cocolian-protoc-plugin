@@ -32,6 +32,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.apache.log4j.Logger;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
@@ -52,6 +53,8 @@ import org.sonatype.plexus.build.incremental.BuildContext;
  */
 public class ProtocJarMojo extends AbstractMojo
 {
+	private static final Logger log=Logger.getLogger(ProtocJarMojo.class);
+	private static final String VERSION="--version";
 	private static final String DEFAULT_INPUT_DIR = "/src/main/protobuf/".replace('/', File.separatorChar);
 
     /**
@@ -309,9 +312,10 @@ public class ProtocJarMojo extends AbstractMojo
 	private void performProtoCompilation() throws MojoExecutionException {
 		if (protocCommand != null) {
 			try {
-				Protoc.runProtoc(protocCommand, new String[]{"--version"});
+				Protoc.runProtoc(protocCommand, new String[]{VERSION});
 			}
 			catch (Exception e) {
+				log.error(e.getMessage(),e);
 				protocCommand = null;
 			}
 		}
@@ -328,9 +332,10 @@ public class ProtocJarMojo extends AbstractMojo
 					protocCommand = protocFile.getAbsolutePath();
 					try {
 						// some linuxes don't allow exec in /tmp, try one dummy execution, switch to user home if it fails
-						Protoc.runProtoc(protocCommand, new String[]{"--version"});
+						Protoc.runProtoc(protocCommand, new String[]{VERSION});
 					}
 					catch (Exception e) {
+						log.error(e.getMessage(),e);
 						tempRoot = new File(System.getProperty("user.home"));
 						protocFile = Protoc.extractProtoc(ProtocVersion.getVersion("-v"+protocVersion), includeStdTypes, tempRoot);
 						protocCommand = protocFile.getAbsolutePath();
@@ -343,6 +348,7 @@ public class ProtocJarMojo extends AbstractMojo
 				}
 			}
 			catch (IOException e) {
+				log.error(e.getMessage(),e);
 				throw new MojoExecutionException("Error extracting protoc for version " + protocVersion, e);
 			}
 		}
@@ -352,9 +358,10 @@ public class ProtocJarMojo extends AbstractMojo
 			protocCommand = resolveArtifact(protocArtifact, null).getAbsolutePath();
 			try {
 				// some linuxes don't allow exec in /tmp, try one dummy execution, switch to user home if it fails
-				Protoc.runProtoc(protocCommand, new String[]{"--version"});
+				Protoc.runProtoc(protocCommand, new String[]{VERSION});
 			}
 			catch (Exception e) {
+				log.error(e.getMessage(),e);
 				tempRoot = new File(System.getProperty("user.home"));
 				protocCommand = resolveArtifact(protocArtifact, tempRoot).getAbsolutePath();
 			}
@@ -422,7 +429,7 @@ public class ProtocJarMojo extends AbstractMojo
 				FileUtils.cleanDirectory(f);
 			}
 			catch (IOException e) {
-				e.printStackTrace();
+				log.error(e.getMessage(),e);
 			}
 		}
 	}
@@ -462,6 +469,7 @@ public class ProtocJarMojo extends AbstractMojo
 				Protoc.doShading(target.outputDirectory, protocVersion.replace(".", ""));
 			}
 			catch (IOException e) {
+				log.error(e.getMessage(),e);
 				throw new MojoExecutionException("Error occurred during shading", e);
 			}
 		}
@@ -492,9 +500,11 @@ public class ProtocJarMojo extends AbstractMojo
 			if (ret != 0) throw new MojoExecutionException("protoc-jar failed for " + file + ". Exit code " + ret);
 		}
 		catch (InterruptedException e) {
+			log.error(e.getMessage(),e);
 			throw new MojoExecutionException("Interrupted", e);
 		}
 		catch (IOException e) {
+			log.error(e.getMessage(),e);
 			throw new MojoExecutionException("Unable to execute protoc-jar for " + file, e);
 		}
 	}
@@ -555,23 +565,16 @@ public class ProtocJarMojo extends AbstractMojo
 			return tempFile;
 		}
 		catch (Exception e) {
+			log.error(e.getMessage(),e);
 			throw new MojoExecutionException("Error resolving artifact: " + artifactSpec, e);
 		}
 	}
 
 	static File copyFile(File srcFile, File destFile) throws IOException {		
-		FileInputStream is = null;
-		FileOutputStream os = null;
-		try {
-			is = new FileInputStream(srcFile);
-			os = new FileOutputStream(destFile);
+		try (FileOutputStream os = new FileOutputStream(destFile);FileInputStream is = new FileInputStream(srcFile);){
 			int read = 0;
 			byte[] buf = new byte[4096];
 			while ((read = is.read(buf)) > 0) os.write(buf, 0, read);		
-		}
-		finally {
-			if (is != null) is.close();
-			if (os != null) os.close();
 		}
 		return destFile;
 	}

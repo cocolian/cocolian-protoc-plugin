@@ -36,8 +36,11 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.log4j.Logger;
+
 public class PlatformDetector
 {
+	private static final Logger log=Logger.getLogger(PlatformDetector.class);
     public static final String DETECTED_NAME = "os.detected.name";
     public static final String DETECTED_ARCH = "os.detected.arch";
     public static final String DETECTED_VERSION = "os.detected.version";
@@ -49,20 +52,22 @@ public class PlatformDetector
     public static final String DETECTED_RELEASE_LIKE_PREFIX = DETECTED_RELEASE + ".like.";
 
     private static final String UNKNOWN = "unknown";
+    private static final String LINUX="linux";
+    private static final String LINUX_FEDORA="fedora";
     private static final String LINUX_ID_PREFIX = "ID=";
     private static final String LINUX_ID_LIKE_PREFIX = "ID_LIKE=";
     private static final String LINUX_VERSION_ID_PREFIX = "VERSION_ID=";
     private static final String[] LINUX_OS_RELEASE_FILES = {"/etc/os-release", "/usr/lib/os-release"};
     private static final String REDHAT_RELEASE_FILE = "/etc/redhat-release";
-    private static final String[] DEFAULT_REDHAT_VARIANTS = {"rhel", "fedora"};
+    private static final String[] DEFAULT_REDHAT_VARIANTS = {"rhel", LINUX_FEDORA};
 
     private static final Pattern VERSION_REGEX = Pattern.compile("((\\d+)\\.(\\d+)).*");
     private static final Pattern REDHAT_MAJOR_VERSION_REGEX = Pattern.compile("(\\d+)");
 
     public void detect(Properties props, List<String> classifierWithLikes) {
-        log("------------------------------------------------------------------------");
-        log("Detecting the operating system and CPU architecture");
-        log("------------------------------------------------------------------------");
+        log.debug("------------------------------------------------------------------------");
+        log.debug("Detecting the operating system and CPU architecture");
+        log.debug("------------------------------------------------------------------------");
 
         final Properties allProps = new Properties(System.getProperties());
         allProps.putAll(props);
@@ -98,7 +103,7 @@ public class PlatformDetector
         String detectedClassifier = detectedName + '-' + detectedArch;
 
         // For Linux systems, add additional properties regarding details of the OS.
-        LinuxRelease linuxRelease = "linux".equals(detectedName) ? getLinuxRelease() : null;
+        LinuxRelease linuxRelease = LINUX.equals(detectedName) ? getLinuxRelease() : null;
         if (linuxRelease != null) {
             setProperty(props, DETECTED_RELEASE, linuxRelease.id);
             if (linuxRelease.version != null) {
@@ -132,12 +137,13 @@ public class PlatformDetector
         logProperty(name, value);
     }
 
-    protected void log(String message) {
-    	//log(message);
-    }
+//    protected void log(String message) {
+//    	//log(message);
+//    }
 
     protected void logProperty(String name, String value) {
     	//log(name + ": " + value);
+    	log.debug(name + ": " + value);
     }
 
     private static String normalizeOs(String value) {
@@ -154,8 +160,8 @@ public class PlatformDetector
                 return "os400";
             }
         }
-        if (value.startsWith("linux")) {
-            return "linux";
+        if (value.startsWith(LINUX)) {
+            return LINUX;
         }
         if (value.startsWith("macosx") || value.startsWith("osx")) {
             return "osx";
@@ -252,10 +258,9 @@ public class PlatformDetector
      * based on the {@code ID}, {@code ID_LIKE}, and {@code VERSION_ID} entries.
      */
     private static LinuxRelease parseLinuxOsReleaseFile(File file) {
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "utf-8"));
-
+        try (        	
+        		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "utf-8"));
+        ){
             String id = null;
             String version = null;
             Set<String> likeSet = new LinkedHashSet<String>();
@@ -292,10 +297,9 @@ public class PlatformDetector
                 return new LinuxRelease(id, version, likeSet);
             }
         } catch (IOException ignored) {
+        	log.error(ignored);
             // Just absorb. Don't treat failure to read /etc/os-release as an error.
-        } finally {
-            closeQuietly(reader);
-        }
+        } 
         return null;
     }
 
@@ -305,10 +309,9 @@ public class PlatformDetector
      * Other variants will return {@code null}.
      */
     private static LinuxRelease parseLinuxRedhatReleaseFile(File file) {
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "utf-8"));
-
+        try (
+        		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "utf-8"));
+        ){
             // There is only a single line in this file.
             String line = reader.readLine();
             if (line != null) {
@@ -318,8 +321,8 @@ public class PlatformDetector
                 String version = null;
                 if (line.contains("centos")) {
                     id = "centos";
-                } else if (line.contains("fedora")) {
-                    id = "fedora";
+                } else if (line.contains(LINUX_FEDORA)) {
+                    id = LINUX_FEDORA;
                 } else if (line.contains("red hat enterprise linux")) {
                     id = "rhel";
                 } else {
@@ -339,9 +342,8 @@ public class PlatformDetector
                 return new LinuxRelease(id, version, likeSet);
             }
         } catch (IOException ignored) {
+        	log.error(ignored);
             // Just absorb. Don't treat failure to read /etc/os-release as an error.
-        } finally {
-            closeQuietly(reader);
         }
         return null;
     }
@@ -358,6 +360,7 @@ public class PlatformDetector
             }
         } catch (IOException ignored) {
             // Ignore.
+        	log.error(ignored);
         }
     }
 
