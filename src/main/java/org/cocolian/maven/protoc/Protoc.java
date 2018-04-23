@@ -49,6 +49,7 @@ public class Protoc
 	private static final Logger log=Logger.getLogger(Protoc.class);
 	private static final String PROTOCJAR="protocjar";
 	private static final String BUILD="-build";
+	private static final String SEPARATOR="/";
 	
 	public static void main(String[] args) {
 		try {
@@ -98,7 +99,7 @@ public class Protoc
 		ProtocVersion protocVersion = ProtocVersion.PROTOC_VERSION;
 		String javaShadedOutDir = null;
 		
-		List<String> protocCmd = new ArrayList<String>();
+		List<String> protocCmd = new ArrayList<>();
 		protocCmd.add(cmd);
 		for (String arg : argList) {
 			if (arg.startsWith("--java_shaded_out=")) {
@@ -193,7 +194,7 @@ public class Protoc
 		File exeFile = null;
 		if (protocVersion.mArtifact == null) { // look for embedded protoc and on web (maven central)
 			// look for embedded version
-			String srcFilePath = "bin/" + protocVersion.mVersion + "/" + getProtocExeName(protocVersion);
+			String srcFilePath = "bin/" + protocVersion.mVersion + SEPARATOR + getProtocExeName(protocVersion);
 			try {
 				File protocTemp = new File(binDir, "protoc.exe");
 				populateFile(srcFilePath, protocTemp);
@@ -211,7 +212,7 @@ public class Protoc
 			exeFile = findDownloadProtoc(protocVersion);
 		}
 		else { // download by artifact id from maven central
-			String downloadPath = protocVersion.mGroup.replace(".", "/") + "/" + protocVersion.mArtifact + "/";
+			String downloadPath = protocVersion.mGroup.replace(".", SEPARATOR) + SEPARATOR + protocVersion.mArtifact + SEPARATOR;
 			exeFile = downloadProtoc(protocVersion, downloadPath, true);
 		}
 		
@@ -276,7 +277,7 @@ public class Protoc
 		}
 		
 		// download exe
-		String exeSubPath = protocVersion.mVersion + "/" + getProtocExeName(protocVersion);
+		String exeSubPath = protocVersion.mVersion + SEPARATOR + getProtocExeName(protocVersion);
 		URL exeUrl = new URL(releaseUrlStr + downloadPath + exeSubPath);
 		File exeFile = new File(webcacheDir, downloadPath + exeSubPath);
 		if (trueDownload) {
@@ -303,7 +304,7 @@ public class Protoc
 		if (exeName == null) return null;
 		
 		// download exe
-		String exeSubPath = protocVersion.mVersion + "/" + exeName;
+		String exeSubPath = protocVersion.mVersion + SEPARATOR + exeName;
 		URL exeUrl = new URL(snapshotUrlStr + downloadPath + exeSubPath);
 		File exeFile = new File(webcacheDir, downloadPath + exeSubPath);
 		return downloadFile(exeUrl, exeFile, 0);
@@ -368,7 +369,7 @@ public class Protoc
 	}
 
 	public static File populateFile(String srcFilePath, File destFile) throws IOException {
-		String resourcePath = "/" + srcFilePath; // resourcePath for jar, srcFilePath for test
+		String resourcePath = SEPARATOR + srcFilePath; // resourcePath for jar, srcFilePath for test
 		
 		try (
 				FileOutputStream os = new FileOutputStream(destFile);
@@ -465,10 +466,6 @@ public class Protoc
 		return ProtocVersion.getVersion(spec);
 	}
 
-//	static void log(Object msg) {
-//		System.out.println("protoc-jar: " + msg);
-//	}
-
 	static class StreamCopier implements Runnable
 	{
 		public StreamCopier(InputStream in, OutputStream out) {
@@ -511,7 +508,7 @@ public class Protoc
 		"include/google/protobuf/wrappers.proto",
 	};
 
-	static Map<String,String[]> sStdTypesMap = new HashMap<String,String[]>();
+	static Map<String,String[]> sStdTypesMap = new HashMap<>();
 	static {
 		sStdTypesMap.put("2", sStdTypesProto2);
 		sStdTypesMap.put("3", sStdTypesProto3);

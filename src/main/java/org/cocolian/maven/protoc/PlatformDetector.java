@@ -100,8 +100,8 @@ public class PlatformDetector
         }
 
         // Assume the default classifier, without any os "like" extension.
-        String detectedClassifier = detectedName + '-' + detectedArch;
-
+        StringBuilder detectedClassifier = new StringBuilder( detectedName + '-' + detectedArch);
+        
         // For Linux systems, add additional properties regarding details of the OS.
         LinuxRelease linuxRelease = LINUX.equals(detectedName) ? getLinuxRelease() : null;
         if (linuxRelease != null) {
@@ -121,14 +121,14 @@ public class PlatformDetector
             if (classifierWithLikes != null) {
                 for (String classifierLike : classifierWithLikes) {
                     if (linuxRelease.like.contains(classifierLike)) {
-                        detectedClassifier += "-" + classifierLike;
+                    	detectedClassifier.append("-" + classifierLike);
                         // First one wins.
                         break;
                     }
                 }
             }
         }
-        setProperty(props, DETECTED_CLASSIFIER, detectedClassifier);
+        setProperty(props, DETECTED_CLASSIFIER, detectedClassifier.toString());
     }
 
     private void setProperty(Properties props, String name, String value) {
@@ -137,12 +137,7 @@ public class PlatformDetector
         logProperty(name, value);
     }
 
-//    protected void log(String message) {
-//    	//log(message);
-//    }
-
     protected void logProperty(String name, String value) {
-    	//log(name + ": " + value);
     	log.debug(name + ": " + value);
     }
 
@@ -263,7 +258,7 @@ public class PlatformDetector
         ){
             String id = null;
             String version = null;
-            Set<String> likeSet = new LinkedHashSet<String>();
+            Set<String> likeSet = new LinkedHashSet<>();
             String line;
             while((line = reader.readLine()) != null) {
                 // Parse the ID line.
@@ -335,7 +330,7 @@ public class PlatformDetector
                     version = versionMatcher.group(1);
                 }
 
-                Set<String> likeSet = new LinkedHashSet<String>();
+                Set<String> likeSet = new LinkedHashSet<>();
                 likeSet.addAll(Arrays.asList(DEFAULT_REDHAT_VARIANTS));
                 likeSet.add(id);
 
@@ -351,17 +346,6 @@ public class PlatformDetector
     private static String normalizeOsReleaseValue(String value) {
         // Remove any quotes from the string.
         return value.trim().replace("\"", "");
-    }
-
-    private static void closeQuietly(Closeable obj) {
-        try {
-            if (obj != null) {
-                obj.close();
-            }
-        } catch (IOException ignored) {
-            // Ignore.
-        	log.error(ignored);
-        }
     }
 
     private static class LinuxRelease {
@@ -386,7 +370,8 @@ public class PlatformDetector
 
     public static void main(String[] args) {
     	PlatformDetector detector = new PlatformDetector() {
-    		protected void log(String msg) {System.out.println(msg);}
+    		protected void log(String msg) {log.debug(msg);}
+    		@Override
     		protected void logProperty(String name, String value) {log(name + ": " + value);}
     	};
     	Properties props = new Properties();
