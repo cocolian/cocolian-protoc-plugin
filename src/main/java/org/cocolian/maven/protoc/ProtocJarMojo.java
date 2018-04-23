@@ -501,6 +501,7 @@ public class ProtocJarMojo extends AbstractMojo
 		}
 		catch (InterruptedException e) {
 			log.error(e.getMessage(),e);
+			Thread.currentThread().interrupt();
 			throw new MojoExecutionException("Interrupted", e);
 		}
 		catch (IOException e) {

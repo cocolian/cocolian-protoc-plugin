@@ -260,7 +260,7 @@ public class Protoc
 		// download maven-metadata.xml (cache for 8hrs)
 		String mdSubPath = "maven-metadata.xml";
 		URL mdUrl = new URL(releaseUrlStr + downloadPath + mdSubPath);
-		File mdFile = downloadFile(mdUrl,  new File(webcacheDir, downloadPath + mdSubPath), 8*3600*1000);
+		File mdFile = downloadFile(mdUrl,  new File(webcacheDir, downloadPath + mdSubPath), 8L*3600*1000);
 		
 		// find last build (if any) from maven-metadata.xml
 		try {
@@ -294,7 +294,7 @@ public class Protoc
 		// download maven-metadata.xml (cache for 8hrs)
 		String mdSubPath = protocVersion.mVersion + "/maven-metadata.xml";
 		URL mdUrl = new URL(snapshotUrlStr + downloadPath + mdSubPath);
-		File mdFile = downloadFile(mdUrl, new File(webcacheDir, downloadPath + mdSubPath), 8*3600*1000);
+		File mdFile = downloadFile(mdUrl, new File(webcacheDir, downloadPath + mdSubPath), 8L*3600*1000);
 		
 		// parse exe name from maven-metadata.xml
 		String exeName = parseSnapshotExeName(mdFile);
