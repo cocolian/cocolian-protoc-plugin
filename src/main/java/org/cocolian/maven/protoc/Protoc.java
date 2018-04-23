@@ -198,7 +198,8 @@ public class Protoc
 				File protocTemp = new File(binDir, "protoc.exe");
 				populateFile(srcFilePath, protocTemp);
 				log.debug("embedded: " + srcFilePath);
-				protocTemp.setExecutable(true);
+				boolean setExecutable = protocTemp.setExecutable(true);
+				log.debug("setExecutable:"+setExecutable);
 				protocTemp.deleteOnExit();
 				return protocTemp;
 			}
@@ -218,7 +219,8 @@ public class Protoc
 		
 		File protocTemp = new File(binDir, "protoc.exe");
 		populateFile(exeFile.getAbsolutePath(), protocTemp);
-		protocTemp.setExecutable(true);
+		boolean setExecutable = protocTemp.setExecutable(true);
+		log.debug("setExecutable:"+setExecutable);
 		protocTemp.deleteOnExit();
 		return protocTemp;
 	}
@@ -325,8 +327,10 @@ public class Protoc
 			streamCopy(is, os);
 			destFile.getParentFile().mkdirs();
 			Files.delete(Paths.get(destFile.getAbsolutePath()));
-			tmpFile.renameTo(destFile);
-			destFile.setLastModified(System.currentTimeMillis());
+			boolean renameTo = tmpFile.renameTo(destFile);
+			log.debug("renameTo:"+renameTo);
+			boolean setLastModified = destFile.setLastModified(System.currentTimeMillis());
+			log.debug("setLastModified:"+setLastModified);
 		}
 		catch (IOException e) {
 			log.error(e.getMessage(),e);

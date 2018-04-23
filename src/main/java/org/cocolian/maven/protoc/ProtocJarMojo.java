@@ -561,7 +561,8 @@ public class ProtocJarMojo extends AbstractMojo
 			
 			File tempFile = File.createTempFile(as[1], ".exe", dir);
 			copyFile(artifact.getFile(), tempFile);
-			tempFile.setExecutable(true);
+			boolean setExecutable = tempFile.setExecutable(true);
+			log.debug("setExecutable:"+setExecutable);
 			tempFile.deleteOnExit();
 			return tempFile;
 		}
