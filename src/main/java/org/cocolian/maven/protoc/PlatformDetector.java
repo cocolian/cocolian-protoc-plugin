@@ -20,7 +20,6 @@
 package org.cocolian.maven.protoc;
 
 import java.io.BufferedReader;
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -149,11 +148,9 @@ public class PlatformDetector
         if (value.startsWith("hpux")) {
             return "hpux";
         }
-        if (value.startsWith("os400")) {
+        if (value.startsWith("os400")&&(value.length() <= 5 || !Character.isDigit(value.charAt(5)))) {
             // Avoid the names such as os4000
-            if (value.length() <= 5 || !Character.isDigit(value.charAt(5))) {
-                return "os400";
-            }
+            return "os400";
         }
         if (value.startsWith(LINUX)) {
             return LINUX;
