@@ -39,6 +39,7 @@ import java.util.Properties;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -47,7 +48,7 @@ import org.w3c.dom.NodeList;
 public class Protoc
 {
 	private static final Logger log=Logger.getLogger(Protoc.class);
-	private static final String PROTOCJAR="protocjar";
+	private static final String PROTOCJAR="protoc";
 	private static final String BUILD="-build";
 	private static final String SEPARATOR="/";
 	
@@ -194,19 +195,20 @@ public class Protoc
 		File exeFile = null;
 		if (protocVersion.mArtifact == null) { // look for embedded protoc and on web (maven central)
 			// look for embedded version
-			String srcFilePath = "bin/" + protocVersion.mVersion + SEPARATOR + getProtocExeName(protocVersion);
-			try {
-				File protocTemp = new File(binDir, "protoc.exe");
-				populateFile(srcFilePath, protocTemp);
-				log.debug("embedded: " + srcFilePath);
-				boolean setExecutable = protocTemp.setExecutable(true);
-				log.debug("setExecutable:"+setExecutable);
-				protocTemp.deleteOnExit();
-				return protocTemp;
-			}
-			catch (FileNotFoundException e) {
-				log.error(e.getMessage(),e);
-			}
+//			String srcFilePath = "bin/" + protocVersion.mVersion + SEPARATOR + getProtocExeName(protocVersion);
+//			try {
+//				File protocTemp = new File(binDir, "protoc.exe");
+//				populateFile(srcFilePath, protocTemp);
+//				log.debug("embedded: " + srcFilePath);
+//				boolean setExecutable = protocTemp.setExecutable(true);
+//				log.debug("setExecutable:"+setExecutable);
+//				protocTemp.deleteOnExit();
+//				return protocTemp;
+//			}
+//			catch (FileNotFoundException e) {
+////				log.error(e.getMessage(),e);
+//				log.info("FileNotFoundException:"+e.getMessage());
+//			}
 			
 			// look in cache and maven central
 			exeFile = findDownloadProtoc(protocVersion);
@@ -228,26 +230,26 @@ public class Protoc
 
 	public static File findDownloadProtoc(ProtocVersion protocVersion) throws IOException {
 		// look only for cached versions first
-		for (String downloadPath : sDdownloadPaths) {
+//		for (String downloadPath : sDdownloadPaths) {
 			try {
-				File exeFile = downloadProtoc(protocVersion, downloadPath, false);
+				File exeFile = downloadProtoc(protocVersion, false);
 				if (exeFile != null) return exeFile;
 			}
 			catch (IOException e) {
 				log.error(e.getMessage(),e);
 			}
-		}
+//		}
 		
 		// look on maven central
-		for (String downloadPath : sDdownloadPaths) {
+//		for (String downloadPath : sDdownloadPaths) {
 			try {
-				File exeFile = downloadProtoc(protocVersion, downloadPath, true);
+				File exeFile = downloadProtoc(protocVersion, true);
 				if (exeFile != null) return exeFile;
 			}
 			catch (IOException e) {
 				log.error(e.getMessage(),e);
 			}
-		}
+//		}
 		
 		return null;
 	}
@@ -280,6 +282,24 @@ public class Protoc
 		String exeSubPath = protocVersion.mVersion + SEPARATOR + getProtocExeName(protocVersion);
 		URL exeUrl = new URL(releaseUrlStr + downloadPath + exeSubPath);
 		File exeFile = new File(webcacheDir, downloadPath + exeSubPath);
+		if (trueDownload) {
+			return downloadFile(exeUrl, exeFile, 0);
+		}
+		else if (exeFile.exists()) { // cache only
+			log.debug("cached: " + exeFile);
+			return exeFile;
+		}
+		return null;
+	}
+	
+	public static File downloadProtoc(ProtocVersion protocVersion, boolean trueDownload) throws IOException {
+		String releaseUrlStr = "http://static.cocolian.org/protoc/";
+		File webcacheDir = getWebcacheDir();
+		
+		// download exe
+		String exeSubPath = protocVersion.mVersion + SEPARATOR + getProtocExeName(protocVersion);
+		URL exeUrl = new URL(releaseUrlStr +  exeSubPath);
+		File exeFile = new File(webcacheDir,  exeSubPath);
 		if (trueDownload) {
 			return downloadFile(exeUrl, exeFile, 0);
 		}
@@ -327,9 +347,13 @@ public class Protoc
 			log.debug("downloading: " + srcUrl);
 			streamCopy(is, os);
 			destFile.getParentFile().mkdirs();
-			Files.delete(Paths.get(destFile.getAbsolutePath()));
-			boolean renameTo = tmpFile.renameTo(destFile);
-			log.debug("renameTo:"+renameTo);
+//			判断exe文件是否存在
+			if(destFile.exists()){
+				Files.delete(Paths.get(destFile.getAbsolutePath()));
+			}
+			FileUtils.copyFile(tmpFile, destFile);
+			log.debug("tmpFile:"+tmpFile.exists());
+			log.debug("destFile:"+destFile.exists());
 			boolean setLastModified = destFile.setLastModified(System.currentTimeMillis());
 			log.debug("setLastModified:"+setLastModified);
 		}
@@ -443,7 +467,7 @@ public class Protoc
 
 	static File getWebcacheDir() throws IOException {
 		File tmpFile = File.createTempFile(PROTOCJAR, ".tmp");
-		File cacheDir = new File(tmpFile.getParentFile(), "protocjar.webcache");
+		File cacheDir = new File(tmpFile.getParentFile(), PROTOCJAR+".webcache");
 		cacheDir.mkdirs();
 		Files.delete(Paths.get(tmpFile.getAbsolutePath()));
 		return cacheDir;
