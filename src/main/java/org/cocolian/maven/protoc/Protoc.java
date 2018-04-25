@@ -59,6 +59,7 @@ public class Protoc
 				return;
 			}
 			int exitCode = runProtoc(args);
+			log.debug("exitCode:"+exitCode);
 			System.exit(exitCode);
 		}
 		catch (Exception e) {
@@ -164,7 +165,8 @@ public class Protoc
 						pw.println(line.replace("com.google.protobuf", "org.cocolian.maven.protobuf" + version));
 					}
 					// tmpFile.renameTo(file) only works on same filesystem, make copy instead:
-					Files.delete(Paths.get(file.getAbsolutePath()));
+					boolean delete = file.delete();
+					log.debug("delete:"+delete);
 					streamCopy(is, os);
 				}
 			}
@@ -214,8 +216,9 @@ public class Protoc
 			exeFile = findDownloadProtoc(protocVersion);
 		}
 		else { // download by artifact id from maven central
-			String downloadPath = protocVersion.mGroup.replace(".", SEPARATOR) + SEPARATOR + protocVersion.mArtifact + SEPARATOR;
-			exeFile = downloadProtoc(protocVersion, downloadPath, true);
+//			String downloadPath = protocVersion.mGroup.replace(".", SEPARATOR) + SEPARATOR + protocVersion.mArtifact + SEPARATOR;
+//			exeFile = downloadProtoc(protocVersion, downloadPath, true);
+			exeFile = downloadProtoc(protocVersion, true);
 		}
 		
 		if (exeFile == null) throw new FileNotFoundException("Unsupported platform: " + getProtocExeName(protocVersion));

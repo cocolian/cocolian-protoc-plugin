@@ -53,24 +53,24 @@ public class ProtocTest
 //		}
 	}
 
-	@Test
-	public void testRunProtocDownloadArtifact() throws Exception { // download by artifact id
-		log("testRunProtocDownloadArtifact");
-		String cls = Protoc.getPlatformClassifier();
-		if (cls.startsWith("linux-x86") || cls.startsWith("osx-x86") || cls.startsWith("windows-x86"))
-		{
-			String[] args = {"--version", "-v:cocolian-protoc-plugin:maven-plugin:3.1.0"}; // should automatically pick up 3.1.0-build2
-			assertEquals(0, Protoc.runProtoc(args));
-		}
-		{
-			String[] args = {"--version", "-v:cocolian-protoc-plugin:maven-plugin:3.4.0"};
-			assertEquals(0, Protoc.runProtoc(args));
-		}
-		{
-			String[] args = {"--version", "-v:cocolian-protoc-plugin:maven-plugin:3.4.0-SNAPSHOT"};
-			assertEquals(0, Protoc.runProtoc(args));
-		}
-	}
+//	@Test
+//	public void testRunProtocDownloadArtifact() throws Exception { // download by artifact id
+//		log("testRunProtocDownloadArtifact");
+//		String cls = Protoc.getPlatformClassifier();
+//		if (cls.startsWith("linux-x86") || cls.startsWith("osx-x86") || cls.startsWith("windows-x86"))
+//		{
+//			String[] args = {"--version", "-v:cocolian-protoc-plugin:maven-plugin:2.4.1"}; // should automatically pick up 3.1.0-build2
+//			assertEquals(0, Protoc.runProtoc(args));
+//		}
+//		{
+//			String[] args = {"--version", "-v:cocolian-protoc-plugin:maven-plugin:2.5.0"};
+//			assertEquals(0, Protoc.runProtoc(args));
+//		}
+//		{
+//			String[] args = {"--version", "-v:cocolian-protoc-plugin:maven-plugin:2.6.1"};
+//			assertEquals(0, Protoc.runProtoc(args));
+//		}
+//	}
 
 	@Test
 	public void testStdTypes() throws Exception {
