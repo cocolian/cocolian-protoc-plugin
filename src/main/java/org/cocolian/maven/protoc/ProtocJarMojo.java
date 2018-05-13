@@ -274,7 +274,7 @@ public class ProtocJarMojo extends AbstractMojo
 	private File tempRoot = null;
 
     public void execute() throws MojoExecutionException {
-		if (project.getPackaging() != null && "pom".equals(project.getPackaging().toLowerCase())) {
+		if (project.getPackaging() != null && "pom".equalsIgnoreCase(project.getPackaging().toLowerCase())) {
 			getLog().info("Skipping 'pom' packaged project");
 			return;
 		}
@@ -377,14 +377,14 @@ public class ProtocJarMojo extends AbstractMojo
 			getLog().info("    " + input);
 			if ("all".equalsIgnoreCase(addProtoSources) || "inputs".equalsIgnoreCase(addProtoSources)) {
 				List<String> incs = Arrays.asList("**/*" + extension);
-				List<String> excs = new ArrayList<String>();
+				List<String> excs = new ArrayList<>();
 				projectHelper.addResource(project, input.getAbsolutePath(), incs, excs);			
 			}
 		}
 		
 		if (includeStdTypes) {
 			if (includeDirectories != null && includeDirectories.length > 0) {
-				List<File> includeDirList = new ArrayList<File>();
+				List<File> includeDirList = new ArrayList<>();
 				includeDirList.add(stdTypeDir);
 				includeDirList.addAll(Arrays.asList(includeDirectories));
 				includeDirectories = includeDirList.toArray(new File[0]);
@@ -400,7 +400,7 @@ public class ProtocJarMojo extends AbstractMojo
 				getLog().info("    " + include);
 				if ("all".equalsIgnoreCase(addProtoSources)) {
 					List<String> incs = Arrays.asList("**/*" + extension);
-					List<String> excs = new ArrayList<String>();
+					List<String> excs = new ArrayList<>();
 					projectHelper.addResource(project, include.getAbsolutePath(), incs, excs);
 				}
 			}
@@ -501,6 +501,7 @@ public class ProtocJarMojo extends AbstractMojo
 		}
 		catch (InterruptedException e) {
 			log.error(e.getMessage(),e);
+			Thread.currentThread().interrupt();
 			throw new MojoExecutionException("Interrupted", e);
 		}
 		catch (IOException e) {
@@ -510,7 +511,7 @@ public class ProtocJarMojo extends AbstractMojo
 	}
 
 	private Collection<String> buildCommand(File file, String version, String type, String pluginPath, File outputDir, String outputOptions) throws MojoExecutionException {
-		Collection<String> cmd = new ArrayList<String>();
+		Collection<String> cmd = new ArrayList<>();
 		populateIncludes(cmd);
 		cmd.add("-I" + file.getParentFile().getAbsolutePath());
 		if ("descriptor".equals(type)) {
@@ -560,7 +561,8 @@ public class ProtocJarMojo extends AbstractMojo
 			
 			File tempFile = File.createTempFile(as[1], ".exe", dir);
 			copyFile(artifact.getFile(), tempFile);
-			tempFile.setExecutable(true);
+			boolean setExecutable = tempFile.setExecutable(true);
+			log.debug("setExecutable:"+setExecutable);
 			tempFile.deleteOnExit();
 			return tempFile;
 		}

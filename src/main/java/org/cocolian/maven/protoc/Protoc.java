@@ -39,6 +39,7 @@ import java.util.Properties;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -47,8 +48,9 @@ import org.w3c.dom.NodeList;
 public class Protoc
 {
 	private static final Logger log=Logger.getLogger(Protoc.class);
-	private static final String PROTOCJAR="protocjar";
+	private static final String PROTOCJAR="protoc";
 	private static final String BUILD="-build";
+	private static final String SEPARATOR="/";
 	
 	public static void main(String[] args) {
 		try {
@@ -57,6 +59,7 @@ public class Protoc
 				return;
 			}
 			int exitCode = runProtoc(args);
+			log.debug("exitCode:"+exitCode);
 			System.exit(exitCode);
 		}
 		catch (Exception e) {
@@ -98,7 +101,7 @@ public class Protoc
 		ProtocVersion protocVersion = ProtocVersion.PROTOC_VERSION;
 		String javaShadedOutDir = null;
 		
-		List<String> protocCmd = new ArrayList<String>();
+		List<String> protocCmd = new ArrayList<>();
 		protocCmd.add(cmd);
 		for (String arg : argList) {
 			if (arg.startsWith("--java_shaded_out=")) {
@@ -162,7 +165,8 @@ public class Protoc
 						pw.println(line.replace("com.google.protobuf", "org.cocolian.maven.protobuf" + version));
 					}
 					// tmpFile.renameTo(file) only works on same filesystem, make copy instead:
-					Files.delete(Paths.get(file.getAbsolutePath()));
+					boolean delete = file.delete();
+					log.debug("delete:"+delete);
 					streamCopy(is, os);
 				}
 			}
@@ -193,58 +197,62 @@ public class Protoc
 		File exeFile = null;
 		if (protocVersion.mArtifact == null) { // look for embedded protoc and on web (maven central)
 			// look for embedded version
-			String srcFilePath = "bin/" + protocVersion.mVersion + "/" + getProtocExeName(protocVersion);
-			try {
-				File protocTemp = new File(binDir, "protoc.exe");
-				populateFile(srcFilePath, protocTemp);
-				log.debug("embedded: " + srcFilePath);
-				protocTemp.setExecutable(true);
-				protocTemp.deleteOnExit();
-				return protocTemp;
-			}
-			catch (FileNotFoundException e) {
-				log.error(e.getMessage(),e);
-			}
+//			String srcFilePath = "bin/" + protocVersion.mVersion + SEPARATOR + getProtocExeName(protocVersion);
+//			try {
+//				File protocTemp = new File(binDir, "protoc.exe");
+//				populateFile(srcFilePath, protocTemp);
+//				log.debug("embedded: " + srcFilePath);
+//				boolean setExecutable = protocTemp.setExecutable(true);
+//				log.debug("setExecutable:"+setExecutable);
+//				protocTemp.deleteOnExit();
+//				return protocTemp;
+//			}
+//			catch (FileNotFoundException e) {
+////				log.error(e.getMessage(),e);
+//				log.info("FileNotFoundException:"+e.getMessage());
+//			}
 			
 			// look in cache and maven central
 			exeFile = findDownloadProtoc(protocVersion);
 		}
 		else { // download by artifact id from maven central
-			String downloadPath = protocVersion.mGroup.replace(".", "/") + "/" + protocVersion.mArtifact + "/";
-			exeFile = downloadProtoc(protocVersion, downloadPath, true);
+//			String downloadPath = protocVersion.mGroup.replace(".", SEPARATOR) + SEPARATOR + protocVersion.mArtifact + SEPARATOR;
+//			exeFile = downloadProtoc(protocVersion, downloadPath, true);
+			exeFile = downloadProtoc(protocVersion, true);
 		}
 		
 		if (exeFile == null) throw new FileNotFoundException("Unsupported platform: " + getProtocExeName(protocVersion));
 		
 		File protocTemp = new File(binDir, "protoc.exe");
 		populateFile(exeFile.getAbsolutePath(), protocTemp);
-		protocTemp.setExecutable(true);
+		boolean setExecutable = protocTemp.setExecutable(true);
+		log.debug("setExecutable:"+setExecutable);
 		protocTemp.deleteOnExit();
 		return protocTemp;
 	}
 
 	public static File findDownloadProtoc(ProtocVersion protocVersion) throws IOException {
 		// look only for cached versions first
-		for (String downloadPath : sDdownloadPaths) {
+//		for (String downloadPath : sDdownloadPaths) {
 			try {
-				File exeFile = downloadProtoc(protocVersion, downloadPath, false);
+				File exeFile = downloadProtoc(protocVersion, false);
 				if (exeFile != null) return exeFile;
 			}
 			catch (IOException e) {
 				log.error(e.getMessage(),e);
 			}
-		}
+//		}
 		
 		// look on maven central
-		for (String downloadPath : sDdownloadPaths) {
+//		for (String downloadPath : sDdownloadPaths) {
 			try {
-				File exeFile = downloadProtoc(protocVersion, downloadPath, true);
+				File exeFile = downloadProtoc(protocVersion, true);
 				if (exeFile != null) return exeFile;
 			}
 			catch (IOException e) {
 				log.error(e.getMessage(),e);
 			}
-		}
+//		}
 		
 		return null;
 	}
@@ -260,7 +268,7 @@ public class Protoc
 		// download maven-metadata.xml (cache for 8hrs)
 		String mdSubPath = "maven-metadata.xml";
 		URL mdUrl = new URL(releaseUrlStr + downloadPath + mdSubPath);
-		File mdFile = downloadFile(mdUrl,  new File(webcacheDir, downloadPath + mdSubPath), 8*3600*1000);
+		File mdFile = downloadFile(mdUrl,  new File(webcacheDir, downloadPath + mdSubPath), 8L*3600*1000);
 		
 		// find last build (if any) from maven-metadata.xml
 		try {
@@ -274,9 +282,27 @@ public class Protoc
 		}
 		
 		// download exe
-		String exeSubPath = protocVersion.mVersion + "/" + getProtocExeName(protocVersion);
+		String exeSubPath = protocVersion.mVersion + SEPARATOR + getProtocExeName(protocVersion);
 		URL exeUrl = new URL(releaseUrlStr + downloadPath + exeSubPath);
 		File exeFile = new File(webcacheDir, downloadPath + exeSubPath);
+		if (trueDownload) {
+			return downloadFile(exeUrl, exeFile, 0);
+		}
+		else if (exeFile.exists()) { // cache only
+			log.debug("cached: " + exeFile);
+			return exeFile;
+		}
+		return null;
+	}
+	
+	public static File downloadProtoc(ProtocVersion protocVersion, boolean trueDownload) throws IOException {
+		String releaseUrlStr = "http://static.cocolian.org/protoc/";
+		File webcacheDir = getWebcacheDir();
+		
+		// download exe
+		String exeSubPath = protocVersion.mVersion + SEPARATOR + getProtocExeName(protocVersion);
+		URL exeUrl = new URL(releaseUrlStr +  exeSubPath);
+		File exeFile = new File(webcacheDir,  exeSubPath);
 		if (trueDownload) {
 			return downloadFile(exeUrl, exeFile, 0);
 		}
@@ -294,14 +320,14 @@ public class Protoc
 		// download maven-metadata.xml (cache for 8hrs)
 		String mdSubPath = protocVersion.mVersion + "/maven-metadata.xml";
 		URL mdUrl = new URL(snapshotUrlStr + downloadPath + mdSubPath);
-		File mdFile = downloadFile(mdUrl, new File(webcacheDir, downloadPath + mdSubPath), 8*3600*1000);
+		File mdFile = downloadFile(mdUrl, new File(webcacheDir, downloadPath + mdSubPath), 8L*3600*1000);
 		
 		// parse exe name from maven-metadata.xml
 		String exeName = parseSnapshotExeName(mdFile);
 		if (exeName == null) return null;
 		
 		// download exe
-		String exeSubPath = protocVersion.mVersion + "/" + exeName;
+		String exeSubPath = protocVersion.mVersion + SEPARATOR + exeName;
 		URL exeUrl = new URL(snapshotUrlStr + downloadPath + exeSubPath);
 		File exeFile = new File(webcacheDir, downloadPath + exeSubPath);
 		return downloadFile(exeUrl, exeFile, 0);
@@ -324,9 +350,15 @@ public class Protoc
 			log.debug("downloading: " + srcUrl);
 			streamCopy(is, os);
 			destFile.getParentFile().mkdirs();
-			Files.delete(Paths.get(destFile.getAbsolutePath()));
-			tmpFile.renameTo(destFile);
-			destFile.setLastModified(System.currentTimeMillis());
+//			判断exe文件是否存在
+			if(destFile.exists()){
+				Files.delete(Paths.get(destFile.getAbsolutePath()));
+			}
+			FileUtils.copyFile(tmpFile, destFile);
+			log.debug("tmpFile:"+tmpFile.exists());
+			log.debug("destFile:"+destFile.exists());
+			boolean setLastModified = destFile.setLastModified(System.currentTimeMillis());
+			log.debug("setLastModified:"+setLastModified);
 		}
 		catch (IOException e) {
 			log.error(e.getMessage(),e);
@@ -364,7 +396,7 @@ public class Protoc
 	}
 
 	public static File populateFile(String srcFilePath, File destFile) throws IOException {
-		String resourcePath = "/" + srcFilePath; // resourcePath for jar, srcFilePath for test
+		String resourcePath = SEPARATOR + srcFilePath; // resourcePath for jar, srcFilePath for test
 		
 		try (
 				FileOutputStream os = new FileOutputStream(destFile);
@@ -438,7 +470,7 @@ public class Protoc
 
 	static File getWebcacheDir() throws IOException {
 		File tmpFile = File.createTempFile(PROTOCJAR, ".tmp");
-		File cacheDir = new File(tmpFile.getParentFile(), "protocjar.webcache");
+		File cacheDir = new File(tmpFile.getParentFile(), PROTOCJAR+".webcache");
 		cacheDir.mkdirs();
 		Files.delete(Paths.get(tmpFile.getAbsolutePath()));
 		return cacheDir;
@@ -460,10 +492,6 @@ public class Protoc
 	static ProtocVersion getVersion(String spec) {
 		return ProtocVersion.getVersion(spec);
 	}
-
-//	static void log(Object msg) {
-//		System.out.println("protoc-jar: " + msg);
-//	}
 
 	static class StreamCopier implements Runnable
 	{
@@ -507,7 +535,7 @@ public class Protoc
 		"include/google/protobuf/wrappers.proto",
 	};
 
-	static Map<String,String[]> sStdTypesMap = new HashMap<String,String[]>();
+	static Map<String,String[]> sStdTypesMap = new HashMap<>();
 	static {
 		sStdTypesMap.put("2", sStdTypesProto2);
 		sStdTypesMap.put("3", sStdTypesProto3);
