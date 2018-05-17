@@ -11,17 +11,29 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
-public class RemoteProtocCommand implements ProtocCommand
-{
+public class RemoteProtocCommand implements ProtocCommand {
   private static final Logger log = Logger.getLogger(RemoteProtocCommand.class);
-  // 存储protoc.exe文件的临时文件夹名称
+  /**
+   * 存储protoc.exe文件的临时文件夹名称
+   */
   private static final String PROTOCJAR = "protoc";
-  // 远程下载地址
+  /**
+   * 远程下载地址
+   */
   private static final String RELEASEURLSTR = "http://static.cocolian.org/protoc/";
   private static final String SEPARATOR = "/";
 
+  /**
+   * 在网络上下载protoc.exe
+   * 
+   * @param version protoc版本
+   * @param os 操作系统
+   * @param arch 指令集
+   * @return protoc.exe 本地文件路径
+   */
   @Override
   public String make(String version, String os, String arch)
   {
@@ -29,28 +41,13 @@ public class RemoteProtocCommand implements ProtocCommand
     ProtocVersion protocVersion = new ProtocVersion(null, null, version);
     try
     {
-      // 创建protoc文件的临时文件夹
-      // File tmpDir = File.createTempFile(PROTOCJAR, "");
-      // Files.delete(Paths.get(tmpDir.getAbsolutePath()));
-      // tmpDir.mkdirs();
-      // tmpDir.deleteOnExit();
-      // File binDir = new File(tmpDir, "bin");
-      // binDir.mkdirs();
-      // binDir.deleteOnExit();
-
-      // 先在本地缓存目录中搜索
+      // 查找下载Protoc文件
       File exeFile = findDownloadProtoc(protocVersion);
       if (exeFile == null)
       {
         throw new FileNotFoundException("Unsupported platform: " + getProtocExeName(protocVersion));
       }
 
-      // File protocTemp = new File(binDir, "protoc.exe");
-      // ProtocUtils.populateFile(exeFile.getAbsolutePath(), protocTemp);
-      // log.debug("tempFile: "+protocTemp.getAbsolutePath());
-      // boolean setExecutable = protocTemp.setExecutable(true);
-      // log.debug("setExecutable:"+setExecutable);
-      // protocTemp.deleteOnExit();
       return exeFile.getAbsolutePath();
     } catch (IOException e)
     {
@@ -64,7 +61,7 @@ public class RemoteProtocCommand implements ProtocCommand
    * 查找下载Protoc文件
    * 
    * @param protocVersion Protoc
-   * @return
+   * @return File
    * @throws IOException
    */
   private File findDownloadProtoc(ProtocVersion protocVersion) throws IOException
@@ -91,7 +88,7 @@ public class RemoteProtocCommand implements ProtocCommand
     try
     {
       File exeFile = downloadProtoc(protocVersion, true);
-      if (exeFile != null)
+      if (null != exeFile)
       {
         if (!exeFile.canExecute())
         {
@@ -175,7 +172,8 @@ public class RemoteProtocCommand implements ProtocCommand
     try (FileOutputStream os = new FileOutputStream(tmpFile); InputStream is = con.getInputStream();)
     {
       log.debug("downloading: " + srcUrl);
-      ProtocUtils.streamCopy(is, os);
+      // 使用apache IOUtils 方法
+      IOUtils.copy(is, os);
       destFile.getParentFile().mkdirs();
       // 判断exe文件是否存在
       if (destFile.exists())
