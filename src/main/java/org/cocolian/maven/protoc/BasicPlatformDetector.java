@@ -19,10 +19,13 @@ public class BasicPlatformDetector implements PlatformDetector {
    * 操作系统集合
    */
   private static final Map<String, String> osMap = new HashMap<>();
+  /**
+   * 指令集集合
+   */
   private static final Map<String, String> archMap = new HashMap<>();
   private Properties allProps = new Properties(System.getProperties());
-  static
-  {
+
+  static{
     // 初始化操作系统集合
     osMap.put("aix", "aix");
     osMap.put("hpux", "hpux");
@@ -64,10 +67,15 @@ public class BasicPlatformDetector implements PlatformDetector {
     if (StringUtils.isNotBlank(osName))
     {
       String value = normalize(osName);
-      for (String key : osMap.keySet())
+      for (Map.Entry<String, String> entry : osMap.entrySet())
       {
-        if (value.startsWith(key))
-          osStr = osMap.get(key);
+        {
+          String key = entry.getKey();
+          if (value.startsWith(key))
+          {
+            osStr = osMap.get(key);
+          }
+        }
       }
     }
     return osStr;
@@ -85,10 +93,13 @@ public class BasicPlatformDetector implements PlatformDetector {
     if (StringUtils.isNotBlank(osArch))
     {
       String value = normalize(osArch);
-      for (String key : archMap.keySet())
+      for (Map.Entry<String, String> entry : archMap.entrySet())
       {
+        String key = entry.getKey();
         if (value.matches(key))
+        {
           archStr = archMap.get(key);
+        }
       }
     }
 
@@ -104,6 +115,9 @@ public class BasicPlatformDetector implements PlatformDetector {
     return value.toLowerCase(Locale.US).replaceAll("[^a-z0-9]+", "");
   }
 
+  /**
+   * 获取操作系统分类
+   */
   @Override
   public String getClassfier()
   {
@@ -125,4 +139,5 @@ public class BasicPlatformDetector implements PlatformDetector {
     StringBuilder detectedClassifier = new StringBuilder(detectedName + '-' + detectedArch);
     return detectedClassifier.toString();
   }
+  
 }
