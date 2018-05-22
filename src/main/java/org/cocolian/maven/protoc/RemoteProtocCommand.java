@@ -118,7 +118,7 @@ public class RemoteProtocCommand implements ProtocCommand {
     File webcacheDir = getWebcacheDir();
 
     // download exe
-    String exeSubPath = protocVersion.mVersion + SEPARATOR + getProtocExeName(protocVersion);
+    String exeSubPath = protocVersion.getmVersion() + SEPARATOR + getProtocExeName(protocVersion);
     URL exeUrl = new URL(RELEASEURLSTR + exeSubPath);
     File exeFile = new File(webcacheDir, exeSubPath);
     if (trueDownload)
@@ -206,7 +206,7 @@ public class RemoteProtocCommand implements ProtocCommand {
    */
   private String getProtocExeName(ProtocVersion protocVersion)
   {
-    return "protoc-" + protocVersion.mVersion + "-" + new BasicPlatformDetector().getClassfier() + ".exe";
+    return "protoc-" + protocVersion.getmVersion() + "-" + new BasicPlatformDetector().getClassfier() + ".exe";
   }
 
 
