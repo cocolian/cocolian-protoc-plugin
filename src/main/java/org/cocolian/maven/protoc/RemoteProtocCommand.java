@@ -43,7 +43,7 @@ public class RemoteProtocCommand implements ProtocCommand {
     try
     {
       // 查找下载Protoc文件
-      File exeFile = findDownloadProtoc(protocVersion);
+      File exeFile = findDownloadedProtoc(protocVersion);
       if (exeFile == null)
       {
         throw new FileNotFoundException("Unsupported platform: " + getProtocExeName(protocVersion));
@@ -64,7 +64,7 @@ public class RemoteProtocCommand implements ProtocCommand {
    * @return File
    * @throws IOException
    */
-  private File findDownloadProtoc(ProtocVersion protocVersion) throws IOException
+  private File findDownloadedProtoc(ProtocVersion protocVersion) throws IOException
   {
     // 先查找本地缓存目录
     try
