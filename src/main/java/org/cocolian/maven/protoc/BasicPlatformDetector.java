@@ -136,7 +136,9 @@ public class BasicPlatformDetector implements PlatformDetector {
       }
     }
 
-    StringBuilder detectedClassifier = new StringBuilder(detectedName + '-' + detectedArch);
+    StringBuilder detectedClassifier = new StringBuilder(detectedName);
+    detectedClassifier.append("-");
+    detectedClassifier.append(detectedArch);
     return detectedClassifier.toString();
   }
   
