@@ -1,139 +1,31 @@
-/*
- * Copyright 2014 protoc-jar developers
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.cocolian.maven.protoc;
 
-import java.io.File;
-
+import org.junit.Before;
 import org.junit.Test;
+public class ProtocTest {
+  ProtocCommand protocCommand = null;
+  PlatformDetector platformDetector = null;
+  
+  static final String sPersonSchemaFile = "src/test/resources/PersonSchema.proto";
+  static final String sStdTypeExampleFile2 = "src/test/resources/StdTypeExample2.proto";
+  static final String sStdTypeExampleFile3 = "src/test/resources/StdTypeExample3.proto";
+  
+  @Before
+  public void setUp() throws Exception
+  {
+    platformDetector = new BasicPlatformDetector();
+    protocCommand = new RemoteProtocCommand();
+  } 
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+  @Test
+  public void testRunProtocBasic() throws Exception
+  {
+    String os = platformDetector.normalizeOs();
+    String arch = platformDetector.normalizeArch();
+    String command = protocCommand.make("2.4.1", os, arch);
+    int execute = new Protoc.Builder().command(command).addArg(sPersonSchemaFile).includeStdTpes("").javaOut("target/test-protoc").execute();
+    System.out.println(execute);
 
-public class ProtocTest
-{
-	@Test
-	public void testRunProtocBasic() throws Exception {
-		log("testRunProtocBasic");
-		{
-			String[] args = {"--version"};
-			assertEquals(0, Protoc.runProtoc(args));
-		}
-		{
-			String[] args = {"--version", "-v2.4.1"};
-			assertEquals(1, Protoc.runProtoc(args));
-		}
-		{
-			String[] args = {"--version", "-v2.5.0"};
-			assertEquals(0, Protoc.runProtoc(args));
-		}
-		{
-			String[] args = {"--version", "-v2.6.1"};
-			assertEquals(0, Protoc.runProtoc(args));
-		}
-		{
-			String[] args = {"--version", "-v3.5.1"};
-			assertEquals(0, Protoc.runProtoc(args));
-		}
-//		{
-//			String[] args = {"--version", "-v3.5.0-SNAPSHOT"}; // not embedded, should trigger download
-//			assertEquals(0, Protoc.runProtoc(args));
-//		}
-	}
+  }
 
-//	@Test
-//	public void testRunProtocDownloadArtifact() throws Exception { // download by artifact id
-//		log("testRunProtocDownloadArtifact");
-//		String cls = Protoc.getPlatformClassifier();
-//		if (cls.startsWith("linux-x86") || cls.startsWith("osx-x86") || cls.startsWith("windows-x86"))
-//		{
-//			String[] args = {"--version", "-v:cocolian-protoc-plugin:maven-plugin:2.4.1"}; // should automatically pick up 3.1.0-build2
-//			assertEquals(0, Protoc.runProtoc(args));
-//		}
-//		{
-//			String[] args = {"--version", "-v:cocolian-protoc-plugin:maven-plugin:2.5.0"};
-//			assertEquals(0, Protoc.runProtoc(args));
-//		}
-//		{
-//			String[] args = {"--version", "-v:cocolian-protoc-plugin:maven-plugin:2.6.1"};
-//			assertEquals(0, Protoc.runProtoc(args));
-//		}
-//	}
-
-	@Test
-	public void testStdTypes() throws Exception {
-		log("testStdTypes");
-		{
-			String outDir = "target/test-protoc-stdtypes";
-			new File(outDir).mkdirs();
-			String[] args = {"-v2.6.1", "--include_std_types", "-I.", "--java_out="+outDir, sStdTypeExampleFile2};
-			assertEquals(0, Protoc.runProtoc(args));
-		}
-		{
-			String outDir = "target/test-protoc-stdtypes";
-			new File(outDir).mkdirs();
-			String[] args = {"-v3.5.1", "--include_std_types", "-I.", "--java_out="+outDir, sStdTypeExampleFile3};
-			assertEquals(0, Protoc.runProtoc(args));
-		}
-	}
-
-	@Test
-	public void testRunProtocCompile() throws Exception {
-		log("testRunProtocCompile");
-		{
-			String outDir = "target/test-protoc";
-			new File(outDir).mkdirs();
-			String[] args = {"-v2.4.1", "--java_out="+outDir, sPersonSchemaFile};
-			assertEquals(0, Protoc.runProtoc(args));
-		}
-	}
-
-	@Test
-	public void testRunProtocCompileShade() throws Exception {
-		log("testRunProtocCompileShade");
-		{
-			String outDir = "target/test-protoc-shaded-241";
-			new File(outDir).mkdirs();
-			String[] args = {"-v2.4.1", "--java_shaded_out="+outDir, sPersonSchemaFile};
-			assertEquals(0, Protoc.runProtoc(args));
-			assertHasGeneratedFile(outDir);
-		}
-		{
-			String outDir = "target/test-protoc-shaded-250";
-			new File(outDir).mkdirs();
-			String[] args = {"-v2.5.0", "--java_shaded_out="+outDir, sPersonSchemaFile};
-			assertEquals(0, Protoc.runProtoc(args));
-			assertHasGeneratedFile(outDir);
-		}
-		{
-			String outDir = "target/test-protoc-shaded-261";
-			new File(outDir).mkdirs();
-			String[] args = {"-v2.6.1", "--java_shaded_out="+outDir, sPersonSchemaFile};
-			assertEquals(0, Protoc.runProtoc(args));
-			assertHasGeneratedFile(outDir);
-		}
-	}
-	private static void assertHasGeneratedFile(String outDir) {
-		assertTrue(new File(outDir + "/org/cocolian/maven/protoc/PersonSchema.java").exists());
-	}
-
-	static void log(Object msg) {
-		System.out.println("protoc-jar-test: " + msg);
-	}
-
-	static final String sPersonSchemaFile = "src/test/resources/PersonSchema.proto";
-	static final String sStdTypeExampleFile2 = "src/test/resources/StdTypeExample2.proto";
-	static final String sStdTypeExampleFile3 = "src/test/resources/StdTypeExample3.proto";
 }
