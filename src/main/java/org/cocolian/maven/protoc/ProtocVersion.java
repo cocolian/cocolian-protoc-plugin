@@ -1,8 +1,10 @@
 package org.cocolian.maven.protoc;
 
 public class ProtocVersion {
-  public static final ProtocVersion PROTOC_VERSION = new ProtocVersion(null, null, "3.5.1");
-
+  private final String mGroup;
+  private final String mArtifact;
+  private final String mVersion;
+  
   public static ProtocVersion getVersion(String spec)
   {
     if (!spec.startsWith("-v"))
@@ -35,8 +37,4 @@ public class ProtocVersion {
       return mVersion;
     return mGroup + ":" + mArtifact + ":" + mVersion;
   }
-
-  public final String mGroup;
-  public final String mArtifact;
-  public final String mVersion;
 }
