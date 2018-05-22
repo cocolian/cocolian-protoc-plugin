@@ -82,6 +82,7 @@ public class RemoteProtocCommand implements ProtocCommand {
     } catch (IOException e)
     {
       log.error(e.getMessage(), e);
+      throw e;
     }
 
     // 从远程服务器下载Protoc文件
@@ -100,6 +101,7 @@ public class RemoteProtocCommand implements ProtocCommand {
     } catch (IOException e)
     {
       log.error(e.getMessage(), e);
+      throw e;
     }
     return null;
   }
