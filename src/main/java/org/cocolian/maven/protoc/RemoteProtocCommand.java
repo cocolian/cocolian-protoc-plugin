@@ -33,9 +33,10 @@ public class RemoteProtocCommand implements ProtocCommand {
    * @param os 操作系统
    * @param arch 指令集
    * @return protoc.exe 本地文件路径
+   * @throws IOException 
    */
   @Override
-  public String make(String version, String os, String arch)
+  public String make(String version, String os, String arch) throws IOException
   {
     log.debug("protoc version: " + version + ", jplatform os: " + os + ", platform instruction set: " + arch);
     ProtocVersion protocVersion = new ProtocVersion(null, null, version);
@@ -52,9 +53,8 @@ public class RemoteProtocCommand implements ProtocCommand {
     } catch (IOException e)
     {
       log.error(e.getMessage(), e);
+      throw e;
     }
-
-    return null;
   }
 
   /**
