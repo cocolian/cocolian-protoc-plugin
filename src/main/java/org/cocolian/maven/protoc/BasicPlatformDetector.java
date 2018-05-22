@@ -1,21 +1,59 @@
 package org.cocolian.maven.protoc;
 
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
 
 import org.codehaus.plexus.util.StringUtils;
+
 /**
  * 平台探测器
  * 
  * @author 何阳
  *
  */
-public class BasicPlatformDetector implements PlatformDetector
-{
+public class BasicPlatformDetector implements PlatformDetector {
   private static final String UNKNOWN = "unknown";
-  private static final String LINUX = "linux";
-
+  /**
+   * 操作系统集合
+   */
+  private static final Map<String, String> osMap = new HashMap<>();
+  /**
+   * 指令集集合
+   */
+  private static final Map<String, String> archMap = new HashMap<>();
   private Properties allProps = new Properties(System.getProperties());
+
+  static{
+    // 初始化操作系统集合
+    osMap.put("aix", "aix");
+    osMap.put("hpux", "hpux");
+    osMap.put("os400", "os400");
+    osMap.put("linux", "linux");
+    osMap.put("macosx", "osx");
+    osMap.put("osx", "osx");
+    osMap.put("freebsd", "freebsd");
+    osMap.put("openbsd", "openbsd");
+    osMap.put("netbsd", "netbsd");
+    osMap.put("solaris", "sunos");
+    osMap.put("sunos", "sunos");
+    osMap.put("windows", "windows");
+
+    // 初始化指令集集合
+    archMap.put("^(x8664|amd64|ia32e|em64t|x64)$", "x86_64");
+    archMap.put("^(x8632|x86|i[3-6]86|ia32|x32)$", "x86_32");
+    archMap.put("^(ia64|itanium64)$", "itanium_64");
+    archMap.put("^(sparc|sparc32)$", "sparc_32");
+    archMap.put("^(sparcv9|sparc64)$", "sparc_64");
+    archMap.put("^(arm|arm32)$", "arm_32");
+    archMap.put("^(aarch64)$", "aarch_64");
+    archMap.put("^(ppc|ppc32)$", "ppc_32");
+    archMap.put("^(ppc64)$", "ppc_64");
+    archMap.put("^(ppc64le)$", "ppcle_64");
+    archMap.put("^(s390)$", "s390_32");
+    archMap.put("^(s390x)$", "s390_64");
+  }
 
   /**
    * 获取标准化的操作系统信息
@@ -25,54 +63,22 @@ public class BasicPlatformDetector implements PlatformDetector
   public String normalizeOs()
   {
     String osName = allProps.getProperty("os.name");
+    String osStr = UNKNOWN;
     if (StringUtils.isNotBlank(osName))
     {
-
       String value = normalize(osName);
-      if (value.startsWith("aix"))
+      for (Map.Entry<String, String> entry : osMap.entrySet())
       {
-        return "aix";
-      }
-      if (value.startsWith("hpux"))
-      {
-        return "hpux";
-      }
-      if (value.startsWith("os400") && (value.length() <= 5 || !Character.isDigit(value.charAt(5))))
-      {
-        // Avoid the names such as os4000
-        return "os400";
-      }
-      if (value.startsWith(LINUX))
-      {
-        return LINUX;
-      }
-      if (value.startsWith("macosx") || value.startsWith("osx"))
-      {
-        return "osx";
-      }
-      if (value.startsWith("freebsd"))
-      {
-        return "freebsd";
-      }
-      if (value.startsWith("openbsd"))
-      {
-        return "openbsd";
-      }
-      if (value.startsWith("netbsd"))
-      {
-        return "netbsd";
-      }
-      if (value.startsWith("solaris") || value.startsWith("sunos"))
-      {
-        return "sunos";
-      }
-      if (value.startsWith("windows"))
-      {
-        return "windows";
+        {
+          String key = entry.getKey();
+          if (value.startsWith(key))
+          {
+            osStr = osMap.get(key);
+          }
+        }
       }
     }
-
-    return UNKNOWN;
+    return osStr;
   }
 
   /**
@@ -83,60 +89,21 @@ public class BasicPlatformDetector implements PlatformDetector
   public String normalizeArch()
   {
     String osArch = allProps.getProperty("os.arch");
+    String archStr = UNKNOWN;
     if (StringUtils.isNotBlank(osArch))
     {
       String value = normalize(osArch);
-      if (value.matches("^(x8664|amd64|ia32e|em64t|x64)$"))
+      for (Map.Entry<String, String> entry : archMap.entrySet())
       {
-        return "x86_64";
-      }
-      if (value.matches("^(x8632|x86|i[3-6]86|ia32|x32)$"))
-      {
-        return "x86_32";
-      }
-      if (value.matches("^(ia64|itanium64)$"))
-      {
-        return "itanium_64";
-      }
-      if (value.matches("^(sparc|sparc32)$"))
-      {
-        return "sparc_32";
-      }
-      if (value.matches("^(sparcv9|sparc64)$"))
-      {
-        return "sparc_64";
-      }
-      if (value.matches("^(arm|arm32)$"))
-      {
-        return "arm_32";
-      }
-      if ("aarch64".equals(value))
-      {
-        return "aarch_64";
-      }
-      if (value.matches("^(ppc|ppc32)$"))
-      {
-        return "ppc_32";
-      }
-      if ("ppc64".equals(value))
-      {
-        return "ppc_64";
-      }
-      if ("ppc64le".equals(value))
-      {
-        return "ppcle_64";
-      }
-      if ("s390".equals(value))
-      {
-        return "s390_32";
-      }
-      if ("s390x".equals(value))
-      {
-        return "s390_64";
+        String key = entry.getKey();
+        if (value.matches(key))
+        {
+          archStr = archMap.get(key);
+        }
       }
     }
 
-    return UNKNOWN;
+    return archStr;
   }
 
   private String normalize(String value)
@@ -148,16 +115,9 @@ public class BasicPlatformDetector implements PlatformDetector
     return value.toLowerCase(Locale.US).replaceAll("[^a-z0-9]+", "");
   }
 
-  public class DetectionException extends RuntimeException
-  {
-    private static final long serialVersionUID = 7787197994442254320L;
-
-    public DetectionException(String message)
-    {
-      super(message);
-    }
-  }
-
+  /**
+   * 获取操作系统分类
+   */
   @Override
   public String getClassfier()
   {
@@ -176,8 +136,10 @@ public class BasicPlatformDetector implements PlatformDetector
       }
     }
 
-    StringBuilder detectedClassifier = new StringBuilder(detectedName + '-' + detectedArch);
+    StringBuilder detectedClassifier = new StringBuilder(detectedName);
+    detectedClassifier.append("-");
+    detectedClassifier.append(detectedArch);
     return detectedClassifier.toString();
   }
-
+  
 }
